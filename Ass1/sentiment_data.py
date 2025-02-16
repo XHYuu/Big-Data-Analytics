@@ -7,9 +7,10 @@ import pandas as pd
 import string
 import nltk
 from nltk.corpus import stopwords
-nltk.download('punkt')
-nltk.download('stopwords')
+from nltk.tokenize import word_tokenize
 
+nltk.download('punkt')  # 分词器
+nltk.download('stopwords')  # 停用词
 
 np.random.seed(42)
 
@@ -45,7 +46,7 @@ def load_sentiment_examples(file_path: str, split: str) -> List[SentimentExample
 
     if os.path.exists(f"data/{split}_exs.pkl"):
         with open(f"data/{split}_exs.pkl", "rb") as f:
-            exs = pickle.load(f)
+            exs = pickle.load(f)  # 加载缓存文件
     else:
         data = pd.read_csv(file_path)
         exs = []
@@ -82,12 +83,17 @@ def text_preprocessing(sentence: str) -> List[str]:
     '''Preprocess text'''
 
     words = []
-    
+
     # ------------------
     # Write your code here
+    if not isinstance(sentence, str) or len(sentence.strip()) == 0:
+        return words
 
+    words = word_tokenize(sentence)
+    stop_words = set(stopwords.words('english'))
 
-
+    words = [word.lower() for word in words
+             if word.isalnum() and word.lower() not in stop_words]
     # ------------------
 
     return words
