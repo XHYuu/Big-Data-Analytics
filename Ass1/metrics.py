@@ -34,8 +34,8 @@ class ClassificationMetrics(object):
         # Write your code here
         # Multiclass Classifiers
         cm = np.zeros((self.num_classes, self.num_classes), dtype=int)
-        for t, p in zip(self.target, self.pred):
-            cm[t, p] += 1
+        for t, p in zip(self.target, self.pred.astype(int)):
+            cm[t][p] += 1
         # ------------------
 
         return cm
