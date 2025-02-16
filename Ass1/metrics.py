@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.sparse import coo_matrix
 
-
 np.random.seed(42)
 
 
@@ -24,19 +23,19 @@ class ClassificationMetrics(object):
 
         # ------------------
         # Write your code here
-        
-
-
+        self.pred = pred
+        self.target = target
+        self.num_classes = num_classes
+        self.cm = self.compute_confusion_matrix()
         # ------------------
 
     def compute_confusion_matrix(self):
-        cm = np.array([])
-        
         # ------------------
         # Write your code here
-
-
-
+        # Multiclass Classifiers
+        cm = np.zeros((self.num_classes, self.num_classes), dtype=int)
+        for t, p in zip(self.target, self.pred):
+            cm[t, p] += 1
         # ------------------
 
         return cm
@@ -46,8 +45,9 @@ class ClassificationMetrics(object):
 
         # ------------------
         # Write your code here
-
-
+        total = len(self.target)
+        count_true = np.trace(self.cm)
+        accuracy = count_true / total
         # ------------------
 
         return accuracy
@@ -57,8 +57,19 @@ class ClassificationMetrics(object):
 
         # ------------------
         # Write your code here
+        if average == "macro":
+            cls = np.zeros(self.num_classes)
+            for i in range(self.num_classes):
+                total_pred = np.sum(self.cm, axis=0)[i]
+                if total_pred == 0:
+                    continue
+                cls[i] = self.cm[i][i] / total_pred
 
-
+            precision = np.mean(cls)
+        else:
+            total = len(self.target)
+            pred_true = np.trace(self.cm)
+            precision = pred_true / total
 
         # ------------------
 
@@ -69,9 +80,19 @@ class ClassificationMetrics(object):
 
         # ------------------
         # Write your code here
+        if average == "macro":
+            cls = np.zeros(self.num_classes)
+            for i in range(self.num_classes):
+                total_pred = np.sum(self.cm, axis=1)[i]
+                if total_pred == 0:
+                    continue
+                cls[i] = self.cm[i][i] / total_pred
 
-
-
+            recall = np.mean(cls)
+        else:
+            total = len(self.target)
+            pred_true = np.trace(self.cm)
+            recall = pred_true / total
         # ------------------
 
         return recall
@@ -81,9 +102,27 @@ class ClassificationMetrics(object):
 
         # ------------------
         # Write your code here
-
-
-
+        if average == "macro":
+            cls = np.zeros(self.num_classes)
+            for i in range(self.num_classes):
+                # precision
+                total_pred_precision = np.sum(self.cm, axis=0)[i]
+                if total_pred_precision == 0:
+                    cls_precision = 0
+                else:
+                    cls_precision = self.cm[i][i] / total_pred_precision
+                # recall
+                total_pred_recall = np.sum(self.cm, axis=1)[i]
+                if total_pred_recall == 0:
+                    cls_recall = 0
+                else:
+                    cls_recall = self.cm[i][i] / total_pred_recall
+                cls[i] = (1 + (beta ** 2)) * (cls_precision * cls_recall) / ((beta ** 2) * cls_precision + cls_recall)
+            f_score = np.mean(cls)
+        else:
+            precision = np.trace(self.cm) / len(self.target)
+            recall = np.trace(self.cm) / len(self.target)
+            f_score = (1 + (beta ** 2)) * (precision * recall) / ((beta ** 2) * precision + recall)
         # ------------------
 
         return f_score
@@ -102,7 +141,7 @@ def test_metrics():
     pred[random_idx] = target[random_idx] = 1
 
     metric = ClassificationMetrics(pred, target, num_classes)
-    print("-"*40)
+    print("-" * 40)
     print("Test for macro average: ")
     accuracy = metric.compute_accuracy()
     print(f"Accuracy: {accuracy:.4f}")
@@ -113,7 +152,7 @@ def test_metrics():
     f_score = metric.compute_f_score(average="macro")
     print(f"F score: {f_score:.4f}")
 
-    print("-"*40)
+    print("-" * 40)
     print("Test for micro average: ")
     metric = ClassificationMetrics(pred, target, num_classes)
     accuracy = metric.compute_accuracy()
@@ -124,7 +163,7 @@ def test_metrics():
     print(f"recall: {recall:.4f}")
     f_score = metric.compute_f_score(average="micro")
     print(f"F score: {f_score:.4f}")
-    print("-"*40)
+    print("-" * 40)
 
     from sklearn.metrics import precision_recall_fscore_support
     # You may verify your code by comparing with sklearn package 
