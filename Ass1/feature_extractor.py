@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Counter, List
+from typing import List
 import numpy as np
 from tqdm import tqdm
 from sentiment_data import SentimentExample
@@ -8,7 +8,6 @@ from scipy.sparse import coo_matrix
 from sentiment_data import load_sentiment_examples
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import PCA
-
 
 np.random.seed(42)
 
@@ -41,7 +40,13 @@ class BoWFeatureExtractor(FeatureExtractor):
 
         # ------------------
         # Write your code here
+        self.counter = Counter()
+        for ex in train_exs:
+            for word in ex.words:
+                self.counter[word] += 1
 
+        self.vocab = sorted(self.counter.keys(), key=lambda word: -self.counter[word])
+        self.vocab_index = {word: i for i, word in enumerate(self.vocab)}
 
         # ------------------
 
@@ -49,12 +54,11 @@ class BoWFeatureExtractor(FeatureExtractor):
         ''' Extract feature for multiple sentiment examples in training or validation phase.
         '''
 
-        feat = np.array([])
-
         # ------------------
         # Write your code here
-
-
+        feat = np.zeros((len(exs), len(self.vocab)))
+        for line, ex in enumerate(exs):
+            feat[line] = self.extract_feature_per_ex(ex)
         # ------------------
 
         return feat
@@ -63,12 +67,12 @@ class BoWFeatureExtractor(FeatureExtractor):
         ''' Extract feature for each sentiment example in test phase.
         '''
 
-        feat = np.array([])
-
         # ------------------
         # Write your code here
-
-
+        feat = np.zeros(len(self.vocab))
+        for word in ex.words:
+            if word in self.vocab_index:
+                feat[self.vocab_index[word]] += 1
         # ------------------
 
         return feat
@@ -80,37 +84,32 @@ class BetterFeatureExtractor(FeatureExtractor):
     """
 
     def __init__(self, train_exs: List[SentimentExample]):
-
         # ------------------
         # (Optional) Write your code here
-
+        pass
 
         # ------------------
-    
-    def extract_feature_for_multiple_exs(self, exs: List[SentimentExample]):   
 
+    def extract_feature_for_multiple_exs(self, exs: List[SentimentExample]):
         feat = np.array([])
 
         # ------------------
         # (Optional) Write your code here
-
 
         # ------------------
 
         return feat
 
     def extract_feature_per_ex(self, ex: SentimentExample) -> np.array:
-        
         feat = np.array([])
 
         # ------------------
         # (Optional) Write your code here
 
-
         # ------------------
 
         return feat
-    
+
 
 def test_bow():
     # test code for bow feature extractor
@@ -118,7 +117,7 @@ def test_bow():
 
     feat_extractor = BoWFeatureExtractor(train_exs)
     feat = feat_extractor.extract_feature_for_multiple_exs(train_exs)
-    print("-"*40)
+    print("-" * 40)
     print(
         f"Number of samples: {feat.shape[0]}\t Feature dimension: {feat.shape[1]}")
     word_num_per_cnt = np.sum(feat, axis=1)
