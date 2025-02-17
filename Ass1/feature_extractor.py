@@ -69,6 +69,7 @@ class BoWFeatureExtractor(FeatureExtractor):
 
         # ------------------
         # Write your code here
+        # TODO: use sparse matrix
         feat = np.zeros(len(self.vocab))
         for word in ex.words:
             if word in self.vocab_index:
