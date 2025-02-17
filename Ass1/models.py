@@ -6,7 +6,6 @@ from sentiment_data import SentimentExample
 import matplotlib.pyplot as plt
 from sklearn.svm import LinearSVC
 
-
 np.random.seed(42)
 
 
@@ -42,34 +41,45 @@ class NaiveBayesClassifier(SentimentClassifier):
     '''Naive Bayes classifier for sentiment classification'''
 
     def __init__(self, num_classes: int, alpha: float = 1.):
-
         # ------------------
         # Write your code here
-
-
+        self.num_classes = num_classes
+        self.y_prior = np.zeros(self.num_classes) + alpha
+        self.word_given_class_count = None
+        self.word_in_label = np.zeros(self.num_classes)
+        self.alpha = alpha
 
         # ------------------
 
     def fit(self, feat: np.array, y: np.array) -> None:
-
         # ------------------
         # Write your code here
-
-
-
+        n = feat.shape[1]
+        self.word_given_class_count = np.zeros((self.num_classes, n)) + self.alpha
+        for i in range(self.num_classes):
+            self.y_prior[i] = np.log(np.sum(y == i) / len(y))
+        for index, f in enumerate(feat):
+            nonzero_indices = np.nonzero(f)[0]
+            self.word_given_class_count[int(y[index])][nonzero_indices] += f[nonzero_indices]
+        for i in range(self.num_classes):
+            self.word_in_label[i] = np.sum(self.word_given_class_count[i]) + self.alpha * n
         # ------------------
 
     def predict(self, feat: np.array) -> int:
-
-        pred = 0
 
         # ------------------
         # Write your code here
         # feat is the feature vector for one example
         # pred is the label (0 or 1)
-
-
-
+        post_p = np.zeros(self.num_classes)
+        for c in range(self.num_classes):
+            feat_p = np.zeros(feat.shape)
+            nonzero_indices = np.nonzero(feat)[0]
+            for i in nonzero_indices:
+                feat_p[i] = feat[i] * np.log(
+                    self.word_given_class_count[c][i] / self.word_in_label[c])
+            post_p[c] = self.y_prior[c] + np.sum(feat_p)
+        pred = int(np.argmax(post_p))
         # ------------------
 
         return pred
@@ -97,8 +107,6 @@ class LogisticRegressionClassifier(SentimentClassifier):
         # ------------------
         # Write your code here
 
-
-
         # ------------------
 
         return probs
@@ -113,7 +121,6 @@ class LogisticRegressionClassifier(SentimentClassifier):
         # Write your code here
         # initialize the parameters
 
-
         # ------------------
 
         loss_values = []
@@ -121,23 +128,22 @@ class LogisticRegressionClassifier(SentimentClassifier):
             running_loss = 0.0
             running_nsample = 0.0
             for i in range(num_samples // self.batch_size):
-                left = i*self.batch_size
-                right = min((i+1)*self.batch_size, num_samples)
+                left = i * self.batch_size
+                right = min((i + 1) * self.batch_size, num_samples)
 
                 # ------------------
                 # Write your code here
                 # calculate the loss and gradient for each batch and update the parameters
-
-
+                loss = 0
 
                 # ------------------
-                
+
                 running_nsample += (right - left)
                 running_loss += loss * (right - left)
                 if i % 200 == 0:
                     print(
-                        f"Epoch {epoch:02d}\t Step: {i:03d}\t Loss: {running_loss/running_nsample:.4f}")
-            loss_values.append(running_loss/running_nsample)
+                        f"Epoch {epoch:02d}\t Step: {i:03d}\t Loss: {running_loss / running_nsample:.4f}")
+            loss_values.append(running_loss / running_nsample)
 
         # draw loss
         plt.plot(loss_values)
@@ -156,7 +162,6 @@ class LogisticRegressionClassifier(SentimentClassifier):
         # feat is the feature vector for one example
         # pred is the label (0 or 1)
 
- 
         # ------------------
 
         return pred
@@ -168,22 +173,18 @@ class BetterClassifier(SentimentClassifier):
         self.num_classes = num_classes
 
     def fit(self, feat: np.array, y: np.array) -> None:
-
         # ------------------
         # (Optional) Write your code here
-
 
         # ------------------
 
         return
 
     def predict(self, feat: np.array) -> int:
-        
         pred = 0
 
         # ------------------
         # (Optional) Write your code here
-
 
         # ------------------
 
