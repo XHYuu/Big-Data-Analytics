@@ -102,11 +102,10 @@ class LogisticRegressionClassifier(SentimentClassifier):
 
     @staticmethod
     def sigmoid(logits: np.array) -> np.array:
-        probs = np.array([])
 
         # ------------------
         # Write your code here
-
+        probs = 1 / (1 + np.exp(-logits))
         # ------------------
 
         return probs
@@ -120,7 +119,8 @@ class LogisticRegressionClassifier(SentimentClassifier):
         # ------------------
         # Write your code here
         # initialize the parameters
-
+        feat = np.hstack([feat, np.ones((num_samples, 1))])
+        self.theta = np.zeros(feature_dim + 1)
         # ------------------
 
         loss_values = []
@@ -134,8 +134,19 @@ class LogisticRegressionClassifier(SentimentClassifier):
                 # ------------------
                 # Write your code here
                 # calculate the loss and gradient for each batch and update the parameters
-                loss = 0
+                batch_indices = indices[left:right]
+                X_batch = feat[batch_indices]
+                y_batch = y[batch_indices]
+                logits = np.dot(X_batch, self.theta)
+                predictions = self.sigmoid(logits)
 
+                loss = -np.mean(
+                    y_batch * np.log(predictions + 1e-8) + (1 - y_batch) * np.log(1 - predictions + 1e-8)
+                )
+
+                error = predictions - y_batch
+                gradient_theta = np.dot(X_batch.T, error) / len(y_batch)
+                self.theta -= self.lr * gradient_theta
                 # ------------------
 
                 running_nsample += (right - left)
@@ -151,17 +162,16 @@ class LogisticRegressionClassifier(SentimentClassifier):
         plt.ylabel("Loss")
         plt.title("Training loss")
         # show
-        plt.show()
+        # plt.show()
 
     def predict(self, feat: np.array) -> int:
-
-        pred = 0
 
         # ------------------
         # Write your code here
         # feat is the feature vector for one example
         # pred is the label (0 or 1)
-
+        feat = np.hstack([feat, np.ones(1)])
+        pred = 1 if self.sigmoid(np.dot(self.theta, feat)) > 0.5 else 0
         # ------------------
 
         return pred
