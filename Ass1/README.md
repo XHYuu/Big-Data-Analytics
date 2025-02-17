@@ -5,8 +5,10 @@ This project try to implement basic feature extraction and classification algori
 
 #### Use basic random way to implement Sentiment Classifier
 ```bash
-cd Ass1
-python main.py
+python main.py --model trivial
 ```
 
-#### 
+#### Use Bayes Classifier to make prediction
+```bash
+python main.py --model nb --feats bow
+```
