@@ -84,11 +84,18 @@ class BetterFeatureExtractor(FeatureExtractor):
     Better feature extractor...try whatever you can think of!
     """
 
-    def __init__(self, train_exs: List[SentimentExample]):
+    def __init__(self, train_exs: List[SentimentExample], n_gram: int = 2):
         # ------------------
         # (Optional) Write your code here
-        pass
-
+        self.counter = Counter()
+        for ex in train_exs:
+            for word in ex.words:
+                self.counter[word] += 0.5
+            for n in range(2, n_gram + 1):
+                for i in range(len(ex.words) - n + 1):
+                    self.counter[" ".join(ex.words[i:i + n])] += 1
+        self.vocab = sorted(self.counter.keys(), key=lambda word: -self.counter[word])
+        self.vocab_index = {word: i for i, word in enumerate(self.vocab)}
         # ------------------
 
     def extract_feature_for_multiple_exs(self, exs: List[SentimentExample]):
@@ -96,7 +103,9 @@ class BetterFeatureExtractor(FeatureExtractor):
 
         # ------------------
         # (Optional) Write your code here
-
+        feat = np.zeros((len(exs), len(self.vocab)))
+        for line, ex in enumerate(exs):
+            feat[line] = self.extract_feature_per_ex(ex)
         # ------------------
 
         return feat
@@ -106,7 +115,10 @@ class BetterFeatureExtractor(FeatureExtractor):
 
         # ------------------
         # (Optional) Write your code here
-
+        feat = np.zeros(len(self.vocab))
+        for word in ex.words:
+            if word in self.vocab_index:
+                feat[self.vocab_index[word]] += 1
         # ------------------
 
         return feat
