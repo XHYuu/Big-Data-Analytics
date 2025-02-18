@@ -9,7 +9,8 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
-nltk.download('punkt')  # 分词器
+nltk.download('punkt_tab')  # 分词器 mac_os
+# nltk.download('punkt')  # windows
 nltk.download('stopwords')  # 停用词
 
 np.random.seed(42)
