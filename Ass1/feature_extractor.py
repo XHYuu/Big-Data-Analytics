@@ -88,12 +88,14 @@ class BetterFeatureExtractor(FeatureExtractor):
         # ------------------
         # (Optional) Write your code here
         self.counter = Counter()
+        self.n_gram = n_gram
         for ex in train_exs:
             for word in ex.words:
-                self.counter[word] += 0.5
+                self.counter[word] += 0.3
             for n in range(2, n_gram + 1):
                 for i in range(len(ex.words) - n + 1):
                     self.counter[" ".join(ex.words[i:i + n])] += 1
+
         self.vocab = sorted(self.counter.keys(), key=lambda word: -self.counter[word])
         self.vocab_index = {word: i for i, word in enumerate(self.vocab)}
         # ------------------
@@ -118,7 +120,12 @@ class BetterFeatureExtractor(FeatureExtractor):
         feat = np.zeros(len(self.vocab))
         for word in ex.words:
             if word in self.vocab_index:
-                feat[self.vocab_index[word]] += 1
+                feat[self.vocab_index[word]] += 0.3
+            for n in range(2, self.n_gram + 1):
+                for i in range(len(ex.words) - n + 1):
+                    key_word = " ".join(ex.words[i:i + n])
+                    if key_word in self.vocab_index:
+                         feat[self.vocab_index[key_word]] += 1
         # ------------------
 
         return feat

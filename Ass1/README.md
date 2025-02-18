@@ -50,7 +50,7 @@ python main.py --model nb --feats better
 
 | Valid accuracy    |
 |-------------------|
-| Accuracy: 0.8497  |
-| Precision: 0.8517 |
-| Recall: 0.8446    |
-| F-score: 0.8469   |
+| Accuracy: 0.8499  |
+| Precision: 0.8487 |
+| Recall: 0.8481    |
+| F-score: 0.8484   |
