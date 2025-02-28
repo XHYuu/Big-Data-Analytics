@@ -178,24 +178,79 @@ class LogisticRegressionClassifier(SentimentClassifier):
 
 
 class BetterClassifier(SentimentClassifier):
-    def __init__(self, num_classes: int) -> None:
+    '''
+    change the hyperparameters in Logistical regression
+    '''
+
+    def __init__(self,
+                 num_classes: int,
+                 lr: float = 0.5,
+                 batch_size: int = 32,
+                 num_epochs: int = 30
+                 ) -> None:
         '''Feel free to define other hyperparameters.'''
         self.num_classes = num_classes
+        self.lr = lr
+        self.batch_size = batch_size
+        self.num_epochs = num_epochs
+
+    @staticmethod
+    def sigmoid(logits: np.array) -> np.array:
+
+        probs = 1 / (1 + np.exp(-logits))
+
+        return probs
 
     def fit(self, feat: np.array, y: np.array) -> None:
-        # ------------------
-        # (Optional) Write your code here
 
-        # ------------------
+        num_samples, feature_dim = feat.shape
+        indices = np.arange(num_samples)
+        np.random.shuffle(indices)
 
-        return
+        feat = np.hstack([feat, np.ones((num_samples, 1))])
+        self.theta = np.zeros(feature_dim + 1)
+
+        loss_values = []
+        for epoch in range(self.num_epochs):
+            running_loss = 0.0
+            running_nsample = 0.0
+            for i in range(num_samples // self.batch_size):
+                left = i * self.batch_size
+                right = min((i + 1) * self.batch_size, num_samples)
+
+                batch_indices = indices[left:right]
+                X_batch = feat[batch_indices]
+                y_batch = y[batch_indices]
+                logits = np.dot(X_batch, self.theta)
+                predictions = self.sigmoid(logits)
+
+                loss = -np.mean(
+                    y_batch * np.log(predictions + 1e-8) + (1 - y_batch) * np.log(1 - predictions + 1e-8)
+                )
+
+                error = predictions - y_batch
+                gradient_theta = np.dot(X_batch.T, error) / len(y_batch)
+                self.theta -= self.lr * gradient_theta
+
+                running_nsample += (right - left)
+                running_loss += loss * (right - left)
+                if i % 200 == 0:
+                    print(
+                        f"Epoch {epoch:02d}\t Step: {i:03d}\t Loss: {running_loss / running_nsample:.4f}")
+            loss_values.append(running_loss / running_nsample)
+
+        # draw loss
+        plt.plot(loss_values)
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss")
+        plt.title("Training loss")
+        plt.show()
 
     def predict(self, feat: np.array) -> int:
-        pred = 0
-
         # ------------------
         # (Optional) Write your code here
-
+        feat = np.hstack([feat, np.ones(1)])
+        pred = 1 if self.sigmoid(np.dot(self.theta, feat)) > 0.5 else 0
         # ------------------
 
         return pred
