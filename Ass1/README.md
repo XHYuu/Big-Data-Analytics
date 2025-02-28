@@ -57,10 +57,9 @@ python main.py --model nb --feats better
 
 #### Use n-grams and Logistic to make Classifier
 ```bash
-python main.py --model lr --feats better
+python main.py --model better --feats better
 ```
 *with learning rate = 1 & batch size = 64.*  
-*without use normalization*
 
 | Valid accuracy    |
 |-------------------|
@@ -68,3 +67,12 @@ python main.py --model lr --feats better
 | Precision: 0.8868 |
 | Recall: 0.8786    |
 | F-score: 0.8813   |
+
+*with learning rate = 0.5 & batch size = 32.* 
+
+| Valid accuracy    |
+|-------------------|
+| Accuracy: 0.8841  |
+| Precision: 0.8876 |
+| Recall: 0.8792    |
+| F-score: 0.8819   |
