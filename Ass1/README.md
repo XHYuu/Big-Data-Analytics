@@ -14,7 +14,7 @@ python main.py --model trivial
 
 ```bash
 python main.py --model nb --feats bow
-```
+``` 
 
 ##### Result
 
