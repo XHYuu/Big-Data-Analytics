@@ -17,7 +17,7 @@ np.random.seed(42)
 
 def parse_args():
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument("--model", type=str, default="trivial",
+    parser.add_argument("--model", type=str, default="lr",
                         help="model to run (trivial, nb, lr, or better)")
     parser.add_argument("--feats", type=str, default="bow",
                         help="feature extractor to use (bow, or better)")
