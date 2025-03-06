@@ -8,6 +8,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import accuracy_score
+from torch.optim import SGD, Adam
+import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
@@ -58,21 +60,27 @@ class DeepAveragingNetwork(nn.Module):
 
         # ------------------
         # Write your code here
-
-
+        self.embedding = torch.nn.Embedding(num_embeddings=input_dim, embedding_dim=embedding_dim)
+        self.fc1 = nn.Linear(in_features=embedding_dim, out_features=hidden_dim)
+        self.bn1 = nn.BatchNorm1d(hidden_dim)
+        self.fc2 = nn.Linear(in_features=hidden_dim, out_features=1)
         # ------------------
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
         ''' Feedforward of Deep Average Network'''
 
-        outputs = torch.Tensor()
-
         # ------------------
         # Write your code here
+        # Word Embedding
+        embedded = self.embedding(input_ids)  # map each word wi to vector embedding
+        mask = (input_ids != attention_mask).unsqueeze(-1).float()  # position of <pad>
+        non_pad_words = torch.sum(mask, dim=1)  # the number of real words
+        sentence_sums = torch.sum(embedded * mask, dim=1) / non_pad_words
 
+        # Network to process vectors
+        outputs = F.sigmoid(self.fc2(F.relu(self.bn1(self.fc1(sentence_sums)))))
 
         # ------------------
-
         return outputs
 
 
@@ -108,8 +116,12 @@ class DANSentimentClassifier(SentimentClassifier):
 
         # ------------------
         # Write your code here
-
-
+        if optimizer == "sgd":
+            self.optimizer = SGD(self.model.parameters(), lr=learning_rate)
+        elif optimizer == "adam":
+            self.optimizer = Adam(self.model.parameters(), lr=learning_rate)
+        else:
+            raise ValueError(f"Unsupported optimizer: {optimizer}")
 
         # Implement loss function
         self.loss = nn.BCELoss()
@@ -129,7 +141,7 @@ class DANSentimentClassifier(SentimentClassifier):
 
         loss_values = []
         total_step = 0
-        
+
         start_t = time.time()
         for epoch in range(self.epochs):
             running_loss = 0.0
@@ -140,10 +152,10 @@ class DANSentimentClassifier(SentimentClassifier):
             cur_idxs = torch.randperm(num_samples)
             train_input_ids = train_input_ids[cur_idxs]
             train_targets = train_targets[cur_idxs]
-            
+
             for step in tqdm(range(num_samples // self.batch_size + 1), desc=f"Epoch {epoch}", leave=False):
                 left = step * self.batch_size
-                right = min((step+1) * self.batch_size, num_samples)
+                right = min((step + 1) * self.batch_size, num_samples)
 
                 batch_ids = train_input_ids[left:right]
                 batch_y = train_targets[left:right]
@@ -151,8 +163,11 @@ class DANSentimentClassifier(SentimentClassifier):
                 # ------------------
                 # Write your code here
                 # Forward and backward of NN
-                
-
+                output = self.model(batch_ids, torch.tensor(self.pad_idx))
+                loss = self.loss(output, batch_y)
+                loss.backward()
+                self.optimizer.step()
+                self.optimizer.zero_grad()
                 # ------------------
 
                 running_loss += loss.item() * (right - left)
@@ -161,16 +176,17 @@ class DANSentimentClassifier(SentimentClassifier):
                 self.writer.add_scalar("Loss/Train", loss.item(), total_step)
                 total_step += 1
 
-            epoch_loss = running_loss/running_nsample
+            epoch_loss = running_loss / running_nsample
             loss_values.append(epoch_loss)
 
             end = time.time()
 
             # ------------------
             # Write your code here
-            # Compuate loss and accuracy on validation set
-
-
+            # Compute loss and accuracy on validation set
+            outputs = self.model(val_input_ids, self.pad_idx)
+            loss = self.loss(outputs, val_targets)
+            preds = (outputs >= 0.5).float()
             # ------------------
 
             accuracy = accuracy_score(
@@ -182,18 +198,19 @@ class DANSentimentClassifier(SentimentClassifier):
             torch.save(self.model.state_dict(),
                        f"{self.ckpt_dir}/epoch_{epoch}.pth")
             print(
-                f"Epoch: {epoch:02d}\ttime: {end-start:.4f}s\tTrain Loss: {epoch_loss:.4f}\tValid Loss: {loss.item():.4f}\tAccuracy: {accuracy:.4f}")
+                f"Epoch: {epoch:02d}\ttime: {end - start:.4f}s\tTrain Loss: {epoch_loss:.4f}\tValid Loss: {loss.item():.4f}\tAccuracy: {accuracy:.4f}")
         end_t = time.time()
         print(f"Total training time: {end_t - start_t :.4f}")
 
     def predict(self, feats: np.array) -> torch.Tensor:
         '''Predict binary labels for input samples'''
-        preds = torch.Tensor()
-
         # ------------------
         # Write your code here
-
-
+        self.model.eval()
+        input_ids = torch.from_numpy(feats).long()
+        with torch.no_grad():
+            outputs = self.model(input_ids, self.pad_idx)
+        preds = (outputs >= 0.5).float()
         # ------------------
 
         return preds.detach()
@@ -213,7 +230,7 @@ class BetterDeepAveragingNetwork(nn.Module):
         super().__init__()
 
         self.embedding = nn.Embedding(input_dim, embedding_dim)
-        
+
         self.model = nn.Sequential(
             nn.Dropout(p=dropout_rate),
             nn.Linear(embedding_dim, hidden_dim),
@@ -230,7 +247,7 @@ class BetterDeepAveragingNetwork(nn.Module):
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
         ''' Feedforward of Better Deep Average Network'''
-        
+
         # Generate embeddings
         embeddings = self.embedding(input_ids)
 
@@ -238,7 +255,7 @@ class BetterDeepAveragingNetwork(nn.Module):
         sum_embeddings = torch.sum(embeddings * attention_mask.unsqueeze(-1), dim=1)
         seq_len = torch.sum(attention_mask, dim=1, keepdim=True)
         avg_embeddings = sum_embeddings / seq_len
-        
+
         # Return probabilities
         outputs = self.model(avg_embeddings)
 
@@ -268,8 +285,8 @@ class BetterClassifier(SentimentClassifier):
         # The index of pad token
         self.pad_idx = self.vocab["<pad>"]
         self.model = BetterDeepAveragingNetwork(
-            input_dim=feature_dim, 
-            embedding_dim=embedding_dim, 
+            input_dim=feature_dim,
+            embedding_dim=embedding_dim,
             hidden_dim=hidden_dim,
             dropout_rate=dropout_rate
         )
@@ -283,13 +300,13 @@ class BetterClassifier(SentimentClassifier):
         # Implement optimizers with weight decay for regularization
         if optimizer == "sgd":
             self.optimizer = optim.SGD(
-                self.model.parameters(), 
+                self.model.parameters(),
                 lr=learning_rate,
                 weight_decay=1e-4
             )
         elif optimizer == "adam":
             self.optimizer = optim.Adam(
-                self.model.parameters(), 
+                self.model.parameters(),
                 lr=learning_rate,
                 weight_decay=1e-4
             )
@@ -311,7 +328,7 @@ class BetterClassifier(SentimentClassifier):
         loss_values = []
         total_step = 0
         best_val_acc = 0.0
-        
+
         start_t = time.time()
         for epoch in range(self.epochs):
             # Set model to training mode
@@ -324,10 +341,10 @@ class BetterClassifier(SentimentClassifier):
             cur_idxs = torch.randperm(num_samples)
             train_input_ids = train_input_ids[cur_idxs]
             train_targets = train_targets[cur_idxs]
-            
+
             for step in tqdm(range(num_samples // self.batch_size + 1), desc=f"Epoch {epoch}", leave=False):
                 left = step * self.batch_size
-                right = min((step+1) * self.batch_size, num_samples)
+                right = min((step + 1) * self.batch_size, num_samples)
 
                 batch_ids = train_input_ids[left:right]
                 batch_y = train_targets[left:right]
@@ -348,7 +365,7 @@ class BetterClassifier(SentimentClassifier):
                 self.writer.add_scalar("Loss/Train", loss.item(), total_step)
                 total_step += 1
 
-            epoch_loss = running_loss/running_nsample
+            epoch_loss = running_loss / running_nsample
             loss_values.append(epoch_loss)
 
             end = time.time()
@@ -368,13 +385,13 @@ class BetterClassifier(SentimentClassifier):
             if accuracy > best_val_acc:
                 best_val_acc = accuracy
                 torch.save(self.model.state_dict(),
-                       f"{self.ckpt_dir}/best_model.pth")
+                           f"{self.ckpt_dir}/best_model.pth")
 
             self.writer.add_scalar("Loss/val", val_loss.item(), total_step)
             self.writer.add_scalar("Accuracy", accuracy, total_step)
 
             print(
-                f"Epoch: {epoch:02d}\ttime: {end-start:.4f}s\tTrain Loss: {epoch_loss:.4f}\tValid Loss: {val_loss.item():.4f}\tAccuracy: {accuracy:.4f}")
+                f"Epoch: {epoch:02d}\ttime: {end - start:.4f}s\tTrain Loss: {epoch_loss:.4f}\tValid Loss: {val_loss.item():.4f}\tAccuracy: {accuracy:.4f}")
         end_t = time.time()
         print(f"Total training time: {end_t - start_t:.4f}")
         print(f"Best validation accuracy: {best_val_acc:.4f}")
@@ -383,7 +400,7 @@ class BetterClassifier(SentimentClassifier):
         '''Predict binary labels for input samples'''
         # Set model to evaluation mode
         self.model.eval()
-        
+
         input_ids = torch.from_numpy(feats).long()
         mask = input_ids != self.pad_idx
 

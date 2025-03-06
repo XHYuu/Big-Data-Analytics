@@ -7,7 +7,7 @@
   from Project 1.
 * Implement an RNN model for character-level classification.
 
-### Word Embedding
+## Word Embedding
 
 The task is based on the Distributional Hypothesis, which states that words that occur in similar contexts tend to have
 similar meanings.
@@ -94,3 +94,12 @@ derived.
 |   son    | 0.53 * 1 + (-0.29) * 0 = 0.53 | 0.604 * 1 = 0.604 |        0.53 / 0.604 = 0.877        |
 |  woman   |  0.21 * 1 + 0.66 * 0 = 0.21   | 0.692 * 1 = 0.692 |        0.21 / 0.692 = 0.304        |
 |          |                               |                   | y has high probability in "future" |
+
+## Deep Averaging Network
+
+Deep Average Network (DAN) is a typical deep unordered model obtaining nearly state-of-the-art accuracy on sen- tence or
+document-level tasks with very little training time.
+
+**Use basic method to train a DAN**
+
+* record different hyperparameter in following [README](Deep_Averaging_Network/README.md)

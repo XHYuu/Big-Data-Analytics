@@ -117,7 +117,7 @@ def train(args: ArgumentParser, train_exs: List[SentimentExample], val_exs: List
 def evaluate(model, exs: List[SentimentExample], feat_extractor: FeatureExtractor):
     ground_truths = np.array([ex.label for ex in exs])
     feats = feat_extractor.extract_features(exs)
-    predictions = model.predict(feats)
+    predictions = model.predict(feats).numpy()
 
     accuracy = accuracy_score(ground_truths, predictions)
     precision, recall, f_score, _ = precision_recall_fscore_support(
