@@ -22,7 +22,7 @@ derived.
 #### Example:
 
 <p align="center">
-  <img src="example_sentences.png" alt="Example Sentences">
+  <img src="example_sentences.png" alt="Example Sentences" width="350">
 </p>
 
 ##### List all distinct words sorted by ascending alphabet order in this corpus, and compute the number of distinct words.
@@ -49,7 +49,7 @@ derived.
 ##### Use SVD to give the most possible semantic meanings of two new embedding words
 
 <p align="center">
-  <img src="example_SVD_result.png" alt="SVD_result">
+  <img src="example_SVD_result.png" alt="SVD_result" width="250">
 </p>
 
 **new word:**
