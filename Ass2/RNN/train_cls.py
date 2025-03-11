@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.optim import Adam
 from tqdm import tqdm
 
 from dataset import create_cls_dataloader, vocab
@@ -15,6 +16,7 @@ torch.manual_seed(42)
 torch.cuda.manual_seed(42)
 torch.backends.cudnn.deterministic = True
 
+
 def train_rnn_cls(args, train_dataloader, valid_dataloader):
     model = RNNClsModel(
         len(vocab), embed_dim=args.embed_dim, hidden_dim=args.hidden_dim)
@@ -23,8 +25,8 @@ def train_rnn_cls(args, train_dataloader, valid_dataloader):
     # Write your code here
     # 1. Define loss_func (Binary cross entropy loss)
     # 2. Define optimizer (Recommend to use Adam)
-
-
+    loss_func = nn.BCELoss()
+    optimizer = Adam(model.parameters(), lr=args.lr)
     # ------------------
 
     loss_list = []
@@ -35,8 +37,8 @@ def train_rnn_cls(args, train_dataloader, valid_dataloader):
         total_loss = 0.
         model.train()
 
-        for _, (sent, targets) in tqdm(enumerate(train_dataloader), total=len(train_dataloader), desc=f"Epoch {epoch:02d}", leave=False):
-
+        for _, (sent, targets) in tqdm(enumerate(train_dataloader), total=len(train_dataloader),
+                                       desc=f"Epoch {epoch:02d}", leave=False):
             # ------------------
             # Write your code here
             # The shape of sent is [batch_size, fix_length_of_sequence]
@@ -47,8 +49,11 @@ def train_rnn_cls(args, train_dataloader, valid_dataloader):
             # 3. Zero gradients
             # 4. Backward
             # 5. Updata network parameters
-
-
+            output = model(sent)
+            loss = loss_func(output, targets)
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
             # ------------------
 
             total_loss += loss.item()
@@ -75,7 +80,7 @@ def train_rnn_cls(args, train_dataloader, valid_dataloader):
             f"Epoch: {epoch:02d}\tLoss: {avg_loss:.4f}\tVal acc: {val_acc:.4f}")
 
     end = time.time()
-    print(f"Total training time: {end-start:.4f}s")
+    print(f"Total training time: {end - start:.4f}s")
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.set_figheight(6)
     fig.set_figwidth(12)
@@ -107,9 +112,9 @@ def evaluate_your_model(model, valid_dataloader):
 
     val_acc = np.mean(val_preds.squeeze() == val_targets.squeeze())
 
-    print("-"*40)
+    print("-" * 40)
     print(f"Valid Accuracy: {val_acc:.4f}")
-    print("-"*40)
+    print("-" * 40)
 
 
 def main():

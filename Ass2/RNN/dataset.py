@@ -7,22 +7,23 @@ from torch.utils.data import DataLoader
 
 class Vocab(object):
     def __init__(self):
-
         self.int2obj = dict()
         self.obj2int = dict()
 
         # ------------------
         # Write your code here
         # Define a vocabulary here. (a-z+" " -> 0-26)
-
-
+        self.vocabulary = {chr(idx): idx - ord('a')
+                           for idx in range(ord('a'), ord('z') + 1)} | {' ': 26}
         # ------------------
 
     def index_of(self, x: str):
         ''' Get index of a given character x'''
         # ------------------
         # Write your code here
-
+        if x in self.vocabulary:
+            return self.vocabulary[x]
+        raise ValueError(f"Character '{x}' not in vocabulary.")
 
         # ------------------
 
@@ -31,8 +32,11 @@ class Vocab(object):
 
         # ------------------
         # Write your code here
-
-
+        if x == 26:
+            return ' '
+        elif ord('a') <= x <= ord('z'):
+            return chr(ord('a') + x)
+        raise ValueError(f"Index '{x}' not in vocabulary.")
         # ------------------
 
     def __len__(self):
@@ -40,8 +44,7 @@ class Vocab(object):
 
         # ------------------
         # Write your code here
-
-
+        return len(self.vocabulary)
         # ------------------
 
 
