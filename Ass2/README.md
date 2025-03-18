@@ -103,3 +103,14 @@ document-level tasks with very little training time.
 **Use basic method to train a DAN**
 
 * record different hyperparameter in following [README](Deep_Averaging_Network/README.md)
+
+## Character Language Modeling with RNNs
+
+Binary classification of fixed-length (20 characters) sequences to predict whether the given sequence is followed by a
+consonant or a vowel (0 for consonant, 1 for vowel)
+
+**Result:**
+
+| Valid Accuracy | Total training time |
+|:--------------:|:-------------------:|
+|     0.8100     |      30.1909s       |
